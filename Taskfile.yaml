@@ -1,0 +1,77 @@
+# Taskfile.yaml
+version: 3
+env:
+  POETRY_VIRTUALENVS_IN_PROJECT: "true"
+  POETRY_VIRTUALENVS_PREFER_ACTIVE_PYTHON: "true"
+  REPOSITORY: contiamo
+  APPLICATION_NAME: project-name-here
+  DOCKER_IMAGE: "{{.REPOSITORY}}/{{.APPLICATION_NAME}}"
+dotenv:
+  - .env
+
+tasks:
+  check_poetry:
+    desc: Check if poetry is installed
+    silent: true
+    internal: true
+    vars:
+      poetry_version: "1.8.2"
+      installed_version:
+          sh: poetry --version 2>/dev/null | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' || echo "0.0.0"
+    cmds:
+      - echo "you should install poetry version {{.poetry_version}}, you have {{.installed_version}}"
+    status:
+      - |
+        {{ if (lt .installed_version .poetry_version) }} exit 1 {{ else}} exit 0 {{ end }}
+
+  setup:
+    desc: Create the python
+    cmds:
+      - task: python-setup
+
+  python-setup:
+    desc: Create a python 3 virtualenv
+    deps:
+      - check_poetry
+    cmds:
+      - poetry install
+    sources:
+      - pyproject.toml
+    generates:
+      - ".venv/*"
+
+  lint:
+    desc: lint the python code
+    deps:
+      - setup
+    cmds:
+      - "poetry run ruff check ."
+      - "poetry run pyright ."
+      - "poetry run typos ."
+
+  format:
+    desc: format the python code
+    deps:
+      - setup
+    cmds:
+      - "poetry run ruff format ."
+      - "poetry run ruff --fix-only ."
+      - "poetry run typos -w ."
+
+  test:
+    desc: Run the tests
+    deps:
+      - setup
+    cmds:
+      - "poetry run pytest . {{.CLI_ARGS}}"
+  # If you Dockerize the app, you can use this command
+  # otherwise remove this.
+  build:
+    desc: Build the application
+    deps:
+      - setup
+    cmds:
+      - docker build -t {{.DOCKER_IMAGE}} .
+    sources:
+      - Dockerfile
+      - src/**/*.py
