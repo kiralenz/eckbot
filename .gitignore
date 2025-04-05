@@ -1,9 +1,10 @@
 .data
-  *.pyc
-  .task
-  .env
-  .venv
-  .pytest_cache
-  .ruff_cache
-  __pycache__
-  tmp/
+*.pyc
+.task
+.env
+.venv
+.pytest_cache
+.ruff_cache
+__pycache__
+tmp/
+.DS_Store
