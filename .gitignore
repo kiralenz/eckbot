@@ -8,3 +8,7 @@
 __pycache__
 tmp/
 .DS_Store
+credentials/*
+!credentials/.gitkeep
+poetry.lock
+*.pdf
